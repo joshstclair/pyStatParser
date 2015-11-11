@@ -8,6 +8,9 @@ from pprint import pprint
 try:
     from nltk import Tree
     
+    from nltk.draw.util import CanvasFrame
+    from nltk.draw import TreeWidget
+
     def nltk_tree(t):
         return Tree(t[0], [c if isinstance(c, str) else nltk_tree(c) for c in t[1:]])
     
@@ -84,10 +87,12 @@ def CKY(pcfg, norm_words):
                     bp[i, j, X], pi[i, j, X] = back, score
     
     largest, second_largest = two_largest([(pi[1, n, X], bp[1, n, X]) for X in pcfg.N])
-    score_message = "The score for the highest parsing is " + repr(largest[0]) + "\n"
-    print(score_message)
-    score_message = "The score for the 2nd highest parsing is " + repr(second_largest[0]) + "\n"
-    print(score_message)
+    f = open('TreeProbabilites.txt', 'w')
+    score_message = "tree1: " + repr(largest[0]) + "\n"
+    f.write(score_message)
+    score_message = "tree2: " + repr(second_largest[0]) + "\n"
+    f.write(score_message)
+    f.close()
     return [backtrace(largest[1], bp), backtrace(second_largest[1], bp)]
 
 
@@ -129,9 +134,21 @@ class Parser:
         [tree1, tree2] = self.raw_parse(sentence)
         return [nltk_tree(tree1), nltk_tree(tree2)]
 
-
+# displays trees to a file
 def display_tree(tree):
     if nltk_is_available:
-        tree.draw()
+        count = 0
+        for t in tree:
+            cf = CanvasFrame()
+            tc = TreeWidget(cf.canvas(), t)
+            cf.add_widget(tc, 10, 10)
+            count += 1
+            fileName = "tree" + repr(count) + ".ps"
+            cf.print_to_file(fileName)
+            cf.destroy()
     else:
-        pprint(tree)
+        count = 0
+        for t in tree:
+            count += 1
+            fileName = "tree" + repr(count) + ".txt"
+            pprint.pprint(t, fileName)
